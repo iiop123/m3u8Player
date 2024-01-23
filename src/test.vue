@@ -1,67 +1,58 @@
 <script>
+import Hls from 'hls.js'
+import DPlayer from 'dplayer';
 import { showToast } from '@nutui/nutui';
-import Player, { MobilePreset } from 'xgplayer';
+import Player from 'xgplayer';
 import 'xgplayer/dist/index.min.css';
-import HlsPlugin from 'xgplayer-hls'
-import {READY, TIME_UPDATE } from 'xgplayer/es/events';
-
 export default { 
   data() {
     return {
-      link:'https://ikcdn01.ikzybf.com/20240108/RYieJrXH/index.m3u8'
+      link:'https://s3plus.meituan.net/v1/mss_550586ef375b493da4aa79bebdfce4fa/csc-apply-file-web/prod/2023-02-03/e71eb453-4362-497c-a03a-026ce82fa7fd.jpg',
     }
   },
   mounted() {
     let location=(new URL(document.location).searchParams).get('url')
-   
 if (location!=null) {
   let name=location
   this.link=name
-  console.log(`url的值为 ${name}`);
+  console.log(`video link is ${name}`);
 }
-this.config={
-  id: 'dplayer',
-  url: this.link,
-  mobile:{
-    disablePress:false
-  },
-  plugins:[HlsPlugin]
-}
-this.player = new Player(this.config)
 
- this.player.on(READY,()=>{
-  if (localStorage.getItem(this.link)!=null) {
-  this.player.currentTime=localStorage.getItem(this.link)
-}
- })
- this.player.on(TIME_UPDATE,()=>{
-  localStorage.setItem(this.link, this.player.currentTime)
- })
+    this.dp= new DPlayer({
+    container: document.getElementById('dplayer'),
+    video: {
+        url: this.link,
+        type: 'customHls',
+        customType: {
+            customHls: function (video, player) {
+                const hls = new Hls();
+                hls.loadSource(video.src);
+                hls.attachMedia(video);
+            },
+        },
+    },
+});
+
   },
   methods: {
     update(){
-      this.config={
-        id: 'dplayer',
+      this.dp= new DPlayer({
+    container: document.getElementById('dplayer'),
+    video: {
         url: this.link,
-        mobile:{
-          disablePress:false
+        type: 'customHls',
+        customType: {
+            customHls: function (video, player) {
+                const hls = new Hls();
+                hls.loadSource(video.src);
+                hls.attachMedia(video);
+            },
         },
-        plugins:[HlsPlugin]
-      }
-this.player = new Player(this.config)
-
- this.player.on(READY,()=>{
-  if (localStorage.getItem(this.link)!=null) {
-  this.player.currentTime=localStorage.getItem(this.link)
-}
- })
- this.player.on(TIME_UPDATE,()=>{
-  localStorage.setItem(this.link, this.player.currentTime)
- })
-console.log(`当前播放地址为${this.config.url}`);
-},  
-
- share(){
+    },
+});
+return this.dp.play()
+    },    
+    share(){
       if (navigator.clipboard.writeText(`${window.location.protocol}//${window.location.host}?url=${this.link}`)) {
       showToast.success('链接复制成功')
       }
